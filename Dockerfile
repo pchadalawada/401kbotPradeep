@@ -1,3 +1,21 @@
+# ==========================================
+# Stage 1: Build the Angular Frontend
+# ==========================================
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy frontend source code
+COPY frontend/package*.json ./
+RUN npm install
+
+# Copy the rest of the frontend code and build
+COPY frontend/ ./
+RUN npm run build
+
+# ==========================================
+# Stage 2: Build the FastAPI Backend & Serve
+# ==========================================
 FROM python:3.11-slim
 
 # Install uv
@@ -6,22 +24,23 @@ RUN pip install --no-cache-dir uv
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
+# Copy python dependencies and lockfile
 COPY pyproject.toml /app/
 
-# Install dependencies using uv sync (creates a virtual environment automatically)
-# We don't have a uv.lock initially, so uv run or uv sync will generate it
+# Install dependencies using uv sync (creates virtual environment)
 RUN uv sync
 
-# Copy application code
+# Copy application backend code
 COPY . /app/
 
-# Cloud Run expects applications to listen on port 8080 by default.
-# The app is configured to use the PORT environment variable.
+# Copy the compiled Angular frontend from Stage 1 into the location expected by main.py
+COPY --from=frontend-builder /app/frontend/dist/frontend/browser /app/frontend/dist/frontend/browser
+
+# Expose Cloud Run default port
 EXPOSE 8080
 
 # Define environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Command to run the application using uv's virtual environment
-CMD ["uv", "run", "python", "app.py"]
+# Run uvicorn server serving both FastAPI and static files
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

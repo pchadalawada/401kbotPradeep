@@ -1,0 +1,50 @@
+<div class="app-container">
+  <mat-card class="chat-card">
+    <mat-card-header>
+      <div mat-card-avatar class="header-image"></div>
+      <mat-card-title>IRS-Compliant 401(k) Withdrawal Assistant</mat-card-title>
+      <mat-card-subtitle>Ask about penalties, rules, and hardship exceptions</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="chat-window" #scrollMe>
+        <!-- Initial Greeting -->
+        <div class="message assistant-message">
+          <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
+          <div class="bubble">
+            Hello! I am a licensed retirement planner. I can help you understand 401(k) withdrawals, penalties, and tax implications based on the latest IRS regulations. How can I help you today?
+          </div>
+        </div>
+
+        <!-- Chat History -->
+        <div *ngFor="let msg of messages" class="message" [ngClass]="msg.role === 'user' ? 'user-message' : 'assistant-message'">
+          <div class="avatar" *ngIf="msg.role === 'assistant'"><mat-icon>smart_toy</mat-icon></div>
+          <div class="bubble">
+            <!-- Using simple pre-wrap to handle basic formatting from LLM -->
+            <span style="white-space: pre-wrap;">{{ msg.content }}</span>
+          </div>
+          <div class="avatar user-avatar" *ngIf="msg.role === 'user'"><mat-icon>person</mat-icon></div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="message assistant-message" *ngIf="isLoading">
+          <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
+          <div class="bubble typing">
+            <mat-spinner diameter="20"></mat-spinner>
+            <span style="margin-left: 8px;">Thinking...</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions class="input-area">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Type your message...</mat-label>
+        <input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="E.g., I'm 55 and need $10,000 for a medical emergency." [disabled]="isLoading">
+        <button matSuffix mat-icon-button (click)="sendMessage()" [disabled]="!newMessage.trim() || isLoading">
+          <mat-icon>send</mat-icon>
+        </button>
+      </mat-form-field>
+    </mat-card-actions>
+  </mat-card>
+</div>
